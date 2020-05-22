@@ -1,0 +1,186 @@
+El entorno Integración Continua ("IC" a partir de ahora), esta pensado para su implementación en un entorno virtualizado.
+Para ello, se ha pensado en implementar máquinas viruales en formato VirtualBox, al ser un sistema gratuito y multi plataforma.
+
+Las máquinas Virtuales ("VM" a partir de ahora) que implementarán las diferentes herramientas o servicios en el proceso IC, estarán basadas en el S.O Linux en su distribución "Debian 10" en arquitectura de 64 bit.
+
+
+Maquina anfitriona:
+
+El sistema operativo anfitrión puede dese un Qindows, OS X, Linux o Solaris.
+Instalaremos la últma versión de VirtualBox que podemos obtener de su página oficial.
+https://www.virtualbox.org/wiki/Downloads
+
+Tambien instalaremos las "Extension Pack" que podemos encontrar en la mísma URL.
+
+
+NOTA: Si en los puntos siguientes, obtenemos algún error en el arranque de máquinas virtuales,
+es posible que la BIOS del Equipo que correo VirtualBox no tenga activada las funciones de virtualización.
+Esto ocurre, sobre todo, cuando queremos arrancar VM basadas en 64 bit. para solucionar el error, revisar la documentación de la placa base del equipo. Es posible que el parámetro a activar, se encutre en la sección "avanzado" o "CPU".
+
+A continuación se indican como instalar las 2 VM con sus herramientas mínimas para comenzar, aunque en el presente repositorio GitHub, se encontrarán las exportaciones de dichas máquinas, para que simplemente se realice el proceso de importación.
+
+creadenciales de las VM:
+root/qapassword
+angel/ikusitele
+
+NOTA: Cambiar "ikusitele" por qapassword y usuario "angel" por "qa"
+
+
+Maquina Virtual 1: GitLab
+
+Crearemos una VM con las siguientes características.
+
+S.O: Debian 10 64bit
+vCPUs: 2
+RAM: 4 Gb
+HDD: 500 Gb (espacio dinámico)
+Servicios: GitLab
+
+Para instalar el S.O obtendremos el 1º DVD de la distribución Debian 10 64 bit en página oficial.
+https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd/
+
+Aquí, no esplicaremos con se procede a instalar un S.O, pero, si que indicaremos que la instalación de paquetes será la básica. Eliminando el "demonio de impresión" y añadiendo el demonio "ssh".
+Recomendación: Trans instalar, para una viaulización más comoda, cambiar la configuración de pantalla a 1440x900(16:10)
+
+Insalación GitLab-CE
+
+Origen de la información: https://about.gitlab.com/install/#debian
+
+1º asegurarse que el S.O esta actualizado
+    sudo apt-get update
+    sudo apt-get install -y curl openssh-server ca-certificates
+    
+2º Instalar Postfix para enviar correos electrónicos de notificaciones.
+    NOTA Es posible utilizar un SMTP externo si se desea
+    sudo apt-get install -y postfix
+
+3º Agregar el repositorio oficial de GitLab CE
+    curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh | sudo bash
+
+4º instalar parquetes enlazando el servicio a la URL del servidor.
+    Sustituir "https://gitlab.example.com" por la URL de la VM. 
+    sudo EXTERNAL_URL="https://gitlab.example.com" apt-get install gitlab-ce
+
+    Si hay algún problema durante el proceso, es posible que sea por los certificados para implementar https.
+    Se puede optar por no usar https. para ello, simplemente cambiaremos la URL de "https" por "http" y ejecutaremos el comando de instalación nuevamente.
+
+5º introducir contraseña para root
+    Abrir un navegador contra la URL del servidor.
+    Si lo hacemos con un navegador en el propio servidor GitLab podemos escribir "localhost".
+    Si accedemos desde un equipo externo, tendremos que colocar la IP del servidor GitLab.
+
+    Al ser la primera vez que entramos, nos solicitará utroducir la contraseña para "root".
+
+    En este caso utilizaremos "qapassword"
+
+6º Nada más introducir la contraseña de "root", seleccionaremos "register" y crearemos nuestra primera cuenta de usuario
+    
+
+    En este caso utilizaremos
+        full name "qa"
+        username "qa"
+        email "qa@lerena.org"
+        password "qapassword"
+
+Maquina Virtual 2: Docker Engine
+S.O: Debian 10 64bit
+vCPUs: 2
+RAM: 4 Gb
+HDD: 500 Gb (espacio dinámico)
+Servicios: Docker Engine
+
+Para instalar el S.O obtendremos el 1º DVD de la distribución Debian 10 64 bit en página oficial.
+https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd/
+
+Aquí, no esplicaremos con se procede a instalar un S.O, pero, si que indicaremos que la instalación de paquetes será la básica. Eliminando el "demonio de impresión" y añadiendo el demonio "ssh".
+
+Asegurar que tenemos los repositorios oficiales de Debian 10. Si hemos instalado el S.O desde ISOs de DVDs offline, es posible que los repositorios disponibles solo sean los DVDs.
+Para solucionarlo, editar el fichero /etc/apt/sources.list y añadir las siguientes líneas
+
+    ### Debian 10 Buster
+    
+    # Oficiales
+    deb http://ftp.es.debian.org/debian/ buster main contrib non-free
+    #deb-src http://ftp.es.debian.org/debian/ buster main contrib non-free
+    
+    # Actualizaciones de segudidad
+    deb http://security.debian.org/debian-security buster/updates main contrib non-free
+    #deb-src http://security.debian.org/debian-security buster/updates main contrib non-free
+    
+    # Updates
+    deb http://ftp.es.debian.org/debian/ buster-updates main contrib non-free
+    #deb-src http://ftp.es.debian.org/debian/ buster-updates main contrib non-free
+    
+    # debian-multimedia
+    deb http://www.deb-multimedia.org buster main non-free
+
+Instalar Doker Engine
+
+Origen de la información: https://docs.docker.com/engine/install/debian/
+
+1º instalar dependencias
+    apt-get update 
+    apt-get install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common
+
+2º Agregar la clave GPG oficial de Docker
+
+    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+
+3º Añadir el repositorio estable de Docker para arquitectura 64 bit
+    add-apt-repository \
+    "deb [arch=amd64] https://download.docker.com/linux/debian \
+    $(lsb_release -cs) \
+    stable"
+
+4º Instalar Docker Engine
+
+    apt-get update
+    apt-get install docker-ce docker-ce-cli containerd.io
+
+5º Confirar que Docker se ha instalado correctamente desplegado el contenedor "hello-world"
+
+    docker run hello-world
+
+Instalar Docker-compose
+
+1º asegurar que los repositorios anteriores, están configurados.
+
+2º ejecutar "apt-get install docker-compose"
+
+
+
+
+
+
+Configuración de Contentendores:
+
+    Obtener imagenes oficiales
+    - Wordpress
+        docker pull wordpress
+        doc: https://hub.docker.com/_/wordpress
+
+        En el Home de "root" se ha creado una carpeta "wordpress".
+        Contiene:
+        - "stack.yml" => Conforma el docker-compose que conforma los 2 contenedores "wordpress" + "MySQL"
+                Usuario bbdd: qa
+                contraseña bbdd: qapassword
+                puerto publicación: 8080
+                
+        - "start.sh" => script shell que lanza el "docker-compose up", bajando las images (si prebiamente no se han bajado ya); contruye una red bridge entre los 2 contenedores.
+        - "stop.sh" => script shell que lanza el "docker-compose stop", parando los 2 contenedores que conforman el fichero "stack.yml".
+
+        
+                
+
+    - Jenkins
+        docker pull Jenkins
+        doc: https://hub.docker.com/_/jenkins
+    - sonarqube
+        docker pull sonarqube
+        doc: https://hub.docker.com/_/sonarqube
+
