@@ -21,9 +21,7 @@ A continuación se indican como instalar las 2 VM con sus herramientas mínimas 
 
 creadenciales de las VM:
 root/qapassword
-angel/ikusitele
-
-NOTA: Cambiar "ikusitele" por qapassword y usuario "angel" por "qa"
+qa/qapassword
 
 
 Maquina Virtual 1: GitLab
