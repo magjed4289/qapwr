@@ -1,0 +1,1 @@
+docker run --name dev_apache2 -p 80:80 -dti ci/apache2_alpine

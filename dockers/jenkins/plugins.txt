@@ -1,0 +1,2 @@
+maven-plugin:3.6
+pipeline-model-definition:1.7.0
