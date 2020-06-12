@@ -1,0 +1,116 @@
+Como construir la imagen y lanzar un contenedor con apache2 
+y el código XML del proyecto de forma manual.
+
+NOTA: Para publicar un WAR consultar el siguiente repositorio: https://github.com/hypergrid-inc/basic-docker-tomcat-example
+       Lo mismo podemos encontrar para WAR en https://aspetraining.com/resources/blog/deploying-your-first-web-app-to-tomcat-on-docker
+
+       httpd
+       https://hub.docker.com/_/httpd
+
+       Version Alpine de contenedor super reducido 5 Mb. para configurar apache2
+       https://github.com/nimmis/docker-alpine-apache
+
+       Versión Alpine-micro modificada por un usuario y añadido apache2. validado con XML
+       https://github.com/nimmis/docker-alpine-apache
+       
+-------------
+Dependencias:
+-------------
+
+1º colocar IPs estáticas en los servidores GitLab y Dockerhost1
+2º en el equipo anfitrios de las VM, suponiendo que es Windows10, en c:\Windows\System32\driver\estáticas
+Añadir la IP del equipo GitLab y el nombre "gitlab.lerena.org" que es como se ha llamado a la VM en su creación.
+3º en la VM Dockerhost1 realizar lo mismo en /etc/hosts para que al utilizar Git, sepa resolver el nombre del host.
+NOTA: se podría crear un DNS para que gestionara los nombres y las VM apuntaran a dicho DNS, evitando tener que configurar el hosts en cada equipo.
+
+---------
+construir 
+---------
+
+1º crear el subdirectorio "squadfree" en el home de root.
+    mkdir squadfree
+    cd squadfree
+2º obtener el repositorio del proyecto "qapwr" de GitLab por medio del clonado del proyecto vía http
+    Así tendremos el contenido del subdirectorio "codigo" donde se encuentra la página Web a introducir en el contenedor.
+    git clone http://gitlab.lerena.org/qa/qapwr.git
+        NOTA: La URL es obtenida desde el repositorio GitLab por "qapwr"
+3º contruir el fichero "dockerfile" con el siguiente contenido
+
+---------------------
+Dockerfile con debian
+---------------------
+
+FROM debian:latest
+MAINTAINER Angel Lerena <lerena.a@gmail.com>
+RUN apt-get update && apt-get install -y locales locales-all apache2
+RUN locale-gen es_ES.UTF-8
+EXPOSE 80
+VOLUME /var/www
+ENV APACHE_RUN_USER www-data
+ENV APACHE_RUN_GROUP www-data
+ENV APACHE_PID_FILE /var/run/apache2.pid
+ENV APACHE_RUN_DIR /var/run/apache2
+ENV APACHE_LOCK_DIR /var/lock/apache2
+ENV APACHE_LOG_DIR /var/log/apache
+RUN mkdir -p $APACHE_RUN_DIR $APACHE_LOCK_DIR $APACHE_LOG_DIR
+COPY qapwr/codigo/Squadfree/ /var/www/html/
+CMD ["/usr/sbin/apache2","-D","FOREGROUND"]
+
+-----------
+Reflesiones
+-----------
+
+Esto ha generado una imagen de 494 Mb (debian 114 Mb + codigo Web), un tamaño considerable, simplemente para una página Web
+
+Se valora la siguiente alternativa para obtener una images más pequeña.
+
+A continuación de confirmar que los Docker conformados por la imagen oficila "debian" son muy pesados
+Se ha probado la imagen "alpine" de solo 5,57 Mb de peso.
+Con el siguiente "dockerfile" se ha conformado una imagen de 38,5 Mb que contiene Apache2 + codigo Web.
+Basandose en el repositorio https://github.com/nimmis/docker-alpine-apache y colocando nuestra página web
+en el path root/etc/apache2/html despues de clonar el repositorio.
+
+---------------------------
+Dockerfile con mini-alpine:
+---------------------------
+
+FROM nimmis/alpine-micro
+
+MAINTAINER nimmis <kjell.havneskold@gmail.com>
+
+COPY root/. /
+
+RUN apk update && apk upgrade && \
+
+    # Make info file about this build
+    printf "Build of nimmis/alpine-apache, date: %s\n"  `date -u +"%Y-%m-%dT%H:%M:%SZ"` >> /etc/BUILD && \
+
+    apk add apache2 libxml2-dev apache2-utils && \
+    mkdir /web/ && chown -R apache.www-data /web && \
+
+    sed -i 's#^DocumentRoot ".*#DocumentRoot "/web/html"#g' /etc/apache2/httpd.conf && \
+    sed -i 's#AllowOverride [Nn]one#AllowOverride All#' /etc/apache2/httpd.conf && \
+    sed -i 's#^ServerRoot .*#ServerRoot /web#g'  /etc/apache2/httpd.conf && \
+    sed -i 's/^#ServerName.*/ServerName webproxy/' /etc/apache2/httpd.conf && \
+    sed -i 's#^IncludeOptional /etc/apache2/conf#IncludeOptional /web/config/conf#g' /etc/apache2/httpd.conf && \
+    sed -i 's#PidFile "/run/.*#Pidfile "/web/run/httpd.pid"#g'  /etc/apache2/conf.d/mpm.conf && \
+    sed -i 's#Directory "/var/www/localhost/htdocs.*#Directory "/web/html" >#g' /etc/apache2/httpd.conf && \
+    sed -i 's#Directory "/var/www/localhost/cgi-bin.*#Directory "/web/cgi-bin" >#g' /etc/apache2/httpd.conf && \
+
+    sed -i 's#/var/log/apache2/#/web/logs/#g' /etc/logrotate.d/apache2 && \
+    sed -i 's/Options Indexes/Options /g' /etc/apache2/httpd.conf && \
+
+    rm -rf /var/cache/apk/*
+
+VOLUME /web
+
+EXPOSE 80 443
+
+---------
+Volumenes
+---------
+
+Alpine expondra 2 volumenes, backup y Web, que pesistiran en el servidor Docker.
+Para localizar el path absoluto de los volumenes ejecutal el comando
+
+    docker inspect alpine

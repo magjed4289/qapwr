@@ -151,6 +151,11 @@ Instalar Docker-compose
 2º ejecutar "apt-get install docker-compose"
 
 
+Llegados a este punto, y viendo que las OVAs son operativas, se hacen pruebas con la
+herramineta Vagrant, y BOX de la comunidad que contienen "GitLab" y "docker".
+Se ha realizado un fichero "Vafrantfile" que despliega 2 VM.
+Con los resultados, se valora en transformar las 2 VM basadas en Debian 10, convertirlas en BOX
+para su publicación en Hub Vagrant.
 
 
 

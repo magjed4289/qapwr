@@ -1,0 +1,69 @@
+Nos basamos en la images oficila de Jenkis y su configuración para añadir plugins en base
+al ficher de texto "plugins.txt"
+
+-----------
+Dockerfile:
+-----------
+
+FROM jenkins
+COPY plugins.txt /usr/share/jenkins/plugins.txt
+RUN /usr/local/bin/plugins.sh /usr/share/jenkins/plugins.txt
+
+
+----------------------------------
+Formato del fichero "plugins.txt":
+----------------------------------
+
+pluginID:version
+maven-plugin:3.6
+pipeline-model-definition:1.7.0
+...
+
+---
+RUN
+---
+
+Comando "run" para lanzar el contenedor publicando los puetos 8080 para su gestión; 50000 para
+la consexión con servidores esclavos Jenkins; y mapeado un volumen para mantener la configuración
+persistente
+
+    docker run -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/jenkins_home jenkins
+
+-----------
+1º arranque
+-----------
+
+La primera vez que entremos vía Web por 8080, nos pedira que peguemos una contraseña
+que podremos obtener en un fichero dentro del contenedor "/var/jenkins_home/secrets/initialAdminPassword".
+Para obtener dicha contraseña tendremos que entrar en el contenedor con el siguiente comanndo
+
+    docker exec -it jenkins /bin/bash
+
+A partir de aqui revisar el contenido del fichero que nos indica siguiendo las instrucciones
+del wizar.
+
+-------
+volumen
+-------
+
+Para localizar y consultar la información amacenada en el volumen, ejecutaremos el siguiente Comando
+
+    docker inspect jenkins
+
+Dentro de toda la información mostrada, podremos localizar la información de volumen, y el path absoluto
+dentro del servidor Docker, donde se ha creado el volumen.
+
+Ejemplo:
+
+    "Mounts": [
+                {
+                    "Type": "volume",
+                    "Name": "jenkins_home",
+                    "Source": "/var/lib/docker/volumes/jenkins_home/_data",
+                    "Destination": "/var/jenkins_home",
+                    "Driver": "local",
+                    "Mode": "z",
+                    "RW": true,
+                    "Propagation": ""
+                }
+            ],
