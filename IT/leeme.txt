@@ -1,0 +1,28 @@
+Con la ayuda de la herramienta "Vagrant" y unos pequeños comandos shell construiremos
+y mantendremos las máquinas virtuales que conforma la infraestructura IT de base.
+
+Requisitos:
+1º Avilitar en la BIOS del equipo la compatibilidad con la tecnología de Virtualización
+2º Tener Instalado un S.O de 64bit para poder lanzar VM de 64bit
+3º Tener instalado VirtuaBox https://www.virtualbox.org/wiki/Downloads
+4º Tener instalado Extension Pack de virtualbox, misma URL
+5º Tener instalada Vagrant https://www.vagrantup.com/
+
+
+Contruir y lanzar por primera vez en entorno IT:
+
+Desde la shell, dirigirse al presente directorio, para tener visible el fichero "vagrantfile".
+
+Obtener los BOX que conforman las 2 VM y lanzarlas
+    vagrant up
+Confirmar el estado de las VM
+    vagrant status
+Acceder vía SSH a cada VM
+    vagrant ssh [nombre VM]
+        El nombre de la VM podemos verlo en "vagrant status" o en el propio fichero "vagrantfile"
+Parar todas las VM de una vez
+    vagrant halt
+Forzar el parado de las VM y borrarlas
+    vagrant destroy
+
+
